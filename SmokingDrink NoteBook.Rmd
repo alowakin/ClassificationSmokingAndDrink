@@ -1,0 +1,298 @@
+---
+title: "Smoking and Drinker "
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*.
+
+## Data importation
+
+```{r,warning=FALSE}
+setwd("C:/Users/HP/Desktop/KAGGLE/SMOKING AND DRIKING")
+
+smdd<-read.csv2("smoking_driking_dataset_Ver01.csv",header = T,sep = ",", dec=".", quote = "\"")
+library(knitr)
+```
+
+## Data head
+```{r}
+head(smdd)
+
+```
+
+
+## Data processing
+```{r}
+# Convertir toutes les variables entières en facteurs
+
+var_categ <- c("hear_left","hear_right")
+
+smdd[, c("sex", "DRK_YN", "hear_left","hear_right","SMK_stat_type_cd")] <- lapply(smdd[, c("sex", "DRK_YN", "hear_left","hear_right","SMK_stat_type_cd")], factor)
+
+#Recoding variable "hear_left et hear_right"
+for (variable in var_categ) {
+  smdd[[variable]] <- factor(smdd[[variable]], levels = c(1, 2), labels = c("Normal", "Abnormal"))
+}
+
+#Recording smoking state variable
+smdd$SMK_stat_type_cd <- factor(smdd$SMK_stat_type_cd, levels = c(1, 2, 3), labels = c("Never", "Used to smoke but quit", "Still smoke"))
+
+
+```
+
+# Column names
+```{r}
+colnames(smdd)
+```
+
+## Presence of missing values
+```{r, warning=FALSE}
+apply(smdd,2,function(x) sum(is.na(c)))
+
+```
+
+## Description data
+```{r}
+str(smdd)
+
+```
+
+## Extraction numerical variable
+```{r,warning=FALSE,error=FALSE}
+
+# Create dataframe to stock a numerical variable
+row_number <- nrow(smdd)
+smdd_q <- as.data.frame(matrix(nrow = row_number, ncol = 0))
+
+# Bouclefor to extract numerical variable
+for (variable in names(smdd)) {
+  if (class(smdd[[variable]]) == "numeric" || class(smdd[[variable]]) == "integer") {
+    smdd_q[[variable]] <- smdd[[variable]]
+  }
+}
+
+smdd_q2 <-sqrt(smdd_q)
+```
+
+```{r}
+# Exemple avec une variable numérique 'age'
+data$age_factor <- cut(data$age, breaks = seq(0, max(data$age) + 5, by = 5), include.lowest = TRUE, labels = FALSE)
+
+# Convertir en facteur avec des labels
+data$age_facto <- factor(data$age, labels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85+"))
+
+```
+
+```{r, warning=FALSE,error=FALSE}
+library(kableExtra)
+library(corrplot)
+correlation_matrix <- cor(smdd_q2)
+kable(correlation_matrix, format = "html") %>%
+  kable_styling()
+```
+
+
+## Correaltion matrix
+```{r,error=FALSE}
+library(corrplot)
+correlation_matrix <- cor(smdd_q)
+corrplot(correlation_matrix, method = "color")
+```
+## Histogram facto variable
+```{r,error=FALSE}
+plot(smdd$sex)
+table(smdd$sex)
+table_merge <- table(smdd$SMK_stat_type_cd,smdd$DRK_YN)
+table_merge1 <- table(smdd$sex,smdd$DRK_YN)
+table_merge2 <- table(smdd$hear_left,smdd$DRK_YN)
+table_merge3 <- table(smdd$hear_right, smdd$DRK_YN)
+
+kable(table_merge1)
+print(table_merge2)
+
+kable(table_merge, format = "html") %>%
+  kable_styling()
+
+chisq.test(table_merge)
+
+```
+
+
+```{r,warning=FALSE}
+library(ggplot2)
+ggplot(data = smdd, aes(x=sex))+
+geom_bar(fill = "skyblue", col = "black") +
+  geom_text(stat = 'count', aes(label = paste(..count.., " (", sprintf("%.1f", ..count../sum(..count..) * 100), "%)")), vjust = -0.5) +
+  xlab("Gender") +
+  ylab("Count") +
+  ggtitle("Graphics of Gender Status")+
+  theme_grey()
+```
+
+```{r}
+ggplot(data = smdd, aes(x=hear_left))+
+geom_bar(fill = "skyblue", col = "black") +
+    geom_text(stat = 'count', aes(label = paste(..count.., " (", sprintf("%.1f", ..count../sum(..count..) * 100), "%)")), vjust = -0.5) +
+  xlab("Hear Left") +
+  ylab("Count") +
+  ggtitle("Graphics of Hearing Left Status")+
+  theme_grey()
+```
+
+
+```{r}
+library(ggplot2)
+```
+
+
+
+```{r}
+ggplot(data = smdd, aes(x=hear_right))+
+geom_bar(fill = "skyblue", col = "black") +
+  geom_text(stat = 'count', aes(label = paste(..count.., " (", sprintf("%.1f", ..count../sum(..count..) * 100), "%)")), vjust = -0.5)+
+  xlab("Hear Right") +
+  ylab("Count") +
+  ggtitle("Graphics of Hearing Right Status")+
+  theme_grey()
+```
+
+```{r,fig.cap='Graphics bar of the independant variable'}
+ggplot(smdd, aes(DRK_YN))+
+geom_bar(fill = "skyblue", col = "black") +
+  geom_text(stat = 'count', aes(label = paste(..count.., " (", sprintf("%.1f", ..count../sum(..count..) * 100), "%)")), vjust = -0.5) +
+  xlab("Drinked or Not") +
+  ylab("Count") +
+  ggtitle("Graphics of Drinked or Not Status")+
+  theme_grey()
+```
+
+```{r}
+ggplot(smdd, aes(SMK_stat_type_cd))+
+geom_bar(fill = "skyblue", col = "black") +
+  geom_text(stat = 'count', aes(label = paste(..count.., " (", sprintf("%.1f", ..count../sum(..count..) * 100), "%)")), vjust = -0.5) +
+  xlab("Smoking state") +
+  ylab("Count") +
+  ggtitle("Graphics of Smoking state")+
+  theme_grey()
+```
+
+
+```{r}
+normal_density <- function(x) {
+  (1 / (sigma * sqrt(2 * pi))) * exp(-0.5 * ((x - mu) / sigma)^2)
+}
+ggplot(smdd, aes(x = age)) +
+  geom_histogram(binwidth = 5, fill = "skyblue", col = "black") +
+  #stat_function(fun = normal_density, color = "red", size = 1.5) + #Multiplier par 5 pour adapter à l'histo
+  ggtitle("Distribution of Age") +
+  xlab("Age") +
+  ylab("Count") +
+  theme_grey()
+```
+
+
+```{r}
+ggplot(smdd, aes(x = height)) +
+  geom_histogram(binwidth = 5, fill = "skyblue", col = "black") +
+  #geom_density(aes(y = ..count.. * 5), fill = "orange", alpha = 0.5) +#Multiplier par 5 pour adapter à l'histo
+  ggtitle("Distribution of Height") +
+  xlab("Height") +
+  ylab("Count") +
+  theme_grey()
+```
+
+```{r}
+ggplot(smdd, aes(x = weight)) +
+  geom_histogram(binwidth = 5, fill = "skyblue", col = "black") +
+  #geom_density(aes(y = ..count.. * 5), fill = "orange", alpha = 0.5) +#Multiplier par 5 pour adapter à l'histo
+  ggtitle("Distribution of Weight") +
+  xlab("Height") +
+  ylab("Count") +
+  theme_grey()
+```
+
+```{r}
+ggplot(smdd, aes(age, height, color = height)) +
+  geom_point() +
+  #geom_smooth(method = "lm", se = FALSE) +  # Ligne de régression
+  #scale_color_manual(values = c("red", "blue"), name = "height") +
+  labs(title = "Relation between age and the height",
+       x = "Age",
+       y = "Height") +
+  theme_grey()
+```
+
+```{r}
+ggplot(smdd, aes(age, height, color = height)) +
+  geom_jitter() +
+  #geom_smooth(method = "lm", se = FALSE) +  # Ligne de régression
+  #scale_color_manual(values = c("red", "blue"), name = "height") +
+  labs(title = "Age and Height Relationship",
+       x = "Age",
+       y = "Height") +
+  theme_grey()
+```
+
+```{r}
+ggplot(smdd, aes(age, weight, color = weight)) +
+  geom_jitter() +
+  #geom_smooth(method = "lm", se = FALSE) +  # Ligne de régression
+  #scale_color_manual(values = c("red", "blue"), name = "height") +
+  labs(title = "Age and Weight Relationship",
+       x = "Age",
+       y = "Weight") +
+  theme_grey()
+```
+
+
+```{r,error=FALSE,warning=FALSE}
+library(tidyverse)
+library(caret)
+```
+
+## Models Building
+```{r}
+# Diviser les données en ensembles d'entraînement et de test
+set.seed(123)
+indices <- createDataPartition(smdd$DRK_YN, p = 0.7, list = FALSE)
+train_data <- smdd[indices, ]
+test_data <- smdd[-indices, ]
+
+
+# Building logistic model
+model <- glm(DRK_YN ~ ., data = train_data, family = "binomial")
+
+summary(model)
+
+# Évaluer le modèle avec la validation croisée
+cv_results <- train(model, train_data, method = "glm", metric = "ROC")
+
+train()
+# Afficher les résultats de la validation croisée
+print(cv_results)
+
+predictions <- predict(model, newdata = test_data, type = "response")
+
+# If the probability is more than 0.5 put Yes ifelse No
+predicted_class <- ifelse(predictions > 0.5, "Y", "N")
+
+predic_class <- factor(predicted_class)
+
+predic_class <- factor(predic_class, levels = levels(smdd$DRK_YN))
+
+table(predicted_class)
+class(predicted_class)
+
+table(predic_class,test_data$DRK_YN)
+
+table(test_data$DRK_YN)
+class(test_data$DRK_YN)
+
+# Créer une matrice de confusion
+confusion_matrix <- confusionMatrix(predic_class,test_data$DRK_YN)
+print(confusion_matrix)
+
+```
+
